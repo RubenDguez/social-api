@@ -30,7 +30,7 @@ export const getAll = async (_req: Request, res: Response) => {
   try {
     const users = await User.find();
 
-    if (!users) {
+    if (!users.length) {
       return res.status(404).json({ message: 'No users yet in database.' });
     }
 

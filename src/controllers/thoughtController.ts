@@ -36,7 +36,7 @@ export const getAll = async (_req: Request, res: Response) => {
   try {
     const thought = await Thought.find();
 
-    if (!thought) {
+    if (!thought.length) {
       return res.status(404).json({ message: 'No thoughts yet in database.' });
     }
 
