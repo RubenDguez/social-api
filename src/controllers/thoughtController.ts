@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Thought from '../models/Thoughts.js';
+import User from '../models/User.js';
 
 export const addThought = async (req: Request, res: Response) => {
   const { thoughtText, username } = req.body;
@@ -9,8 +10,17 @@ export const addThought = async (req: Request, res: Response) => {
   }
 
   try {
-    const newThoughtData = await Thought.create({ thoughtText, username });
-    return res.status(201).json(newThoughtData);
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ message: 'No user with that ID' });
+    }
+  
+    const thought = await Thought.create({ thoughtText, username });
+    const thoughtArray = [...user.thoughts, thought._id];
+    await User.updateOne({ username }, { thoughts: thoughtArray });
+
+    return res.status(201).json(thought);
   } catch (error) {
     const ERROR = error as Error;
     return res.status(500).json(ERROR.message);
@@ -19,7 +29,7 @@ export const addThought = async (req: Request, res: Response) => {
 
 export const getOne = async (req: Request, res: Response) => {
   try {
-    const thought = await Thought.findOne({ _id: req.params.userId }).select('-__v');
+    const thought = await Thought.findOne({ _id: req.params.thoughtId }).select('-__v');
 
     if (!thought) {
       return res.status(404).json({ message: 'No thoughts with that ID' });
