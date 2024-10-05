@@ -5,7 +5,7 @@ import User from '../models/User.js';
 export const addThought = async (req: Request, res: Response) => {
   const { thoughtText, username } = req.body;
 
-  if(!thoughtText || !username) {
+  if (!thoughtText || !username) {
     return res.status(400).json({ message: 'You need to provide a thoughtText and username.' });
   }
 
@@ -15,7 +15,7 @@ export const addThought = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(404).json({ message: 'No user with that ID' });
     }
-  
+
     const thought = await Thought.create({ thoughtText, username });
     const thoughtArray = [...user.thoughts, thought._id];
     await User.updateOne({ username }, { thoughts: thoughtArray });
@@ -51,6 +51,35 @@ export const getAll = async (_req: Request, res: Response) => {
     }
 
     return res.status(200).json(thought);
+  } catch (error) {
+    const ERROR = error as Error;
+    return res.status(500).json(ERROR.message);
+  }
+};
+
+export const deleteThought = async (req: Request, res: Response) => {
+  const { thoughtId } = req.params;
+
+  try {
+    const thoughtToDelete = await Thought.findOne({ _id: thoughtId });
+
+    if (!thoughtToDelete) {
+      return res.status(404).json({ message: 'No thought with that ID' });
+    }
+
+    const username = thoughtToDelete.username;
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ message: 'No user with that username' });
+    }
+
+    const deletedThought = await Thought.deleteOne({ _id: thoughtId });
+    const thoughtArray = user.thoughts.filter((th) => (`${th}` !== thoughtId ));
+
+    await User.updateOne({ username }, { thoughts: thoughtArray })
+
+    return res.status(201).json(deletedThought);
   } catch (error) {
     const ERROR = error as Error;
     return res.status(500).json(ERROR.message);
