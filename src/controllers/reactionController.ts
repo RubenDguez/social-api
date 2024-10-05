@@ -5,6 +5,8 @@ export const addReaction = async (req: Request, res: Response) => {
   const { thoughtId } = req.params;
   const { reactionBody, username } = req.body;
 
+  if (!thoughtId || !reactionBody || !username) return res.status(400).json({ message: 'You need to provide a thoughtId, reactionBody, and username.' });
+
   try {
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: 'No user with that ID' });
@@ -22,6 +24,8 @@ export const addReaction = async (req: Request, res: Response) => {
 
 export const removeReaction = async (req: Request, res: Response) => {
   const { thoughtId, reactionId } = req.params;
+
+  if (!thoughtId || !reactionId) return res.status(400).json({ message: 'You need to provide a thoughtId and reactionId.' });
 
   try {
     const thought = await Thought.findOneAndUpdate({ _id: thoughtId }, { $pull: { reactions: { _id: reactionId } } }, { runValidators: true, new: true });

@@ -2,8 +2,12 @@ import { Request, Response } from 'express';
 import { User } from '../models/index.js';
 
 export const addUser = async (req: Request, res: Response) => {
+  const { username, email } = req.body;
+
+  if (!username || !email) return res.status(400).json({ message: 'You need to provide a username and email.' });
+
   try {
-    const newUser = await User.create(req.body);
+    const newUser = await User.create({ username, email });
     return res.status(201).json(newUser);
   } catch (error) {
     const ERROR = error as Error;
@@ -12,12 +16,14 @@ export const addUser = async (req: Request, res: Response) => {
 };
 
 export const getOne = async (req: Request, res: Response) => {
-  try {
-    const user = await User.findOne({ _id: req.params.userId }).select('-__v');
+  const { userId } = req.params;
 
-    if (!user) {
-      return res.status(404).json({ message: 'No user with that ID' });
-    }
+  if (!userId) return res.status(400).json({ message: 'You need to provide a userId.' });
+
+  try {
+    const user = await User.findOne({ _id: userId }).select('-__v');
+
+    if (!user) return res.status(404).json({ message: 'No user with that ID' });
 
     return res.json(user);
   } catch (error) {
@@ -30,9 +36,7 @@ export const getAll = async (_req: Request, res: Response) => {
   try {
     const users = await User.find();
 
-    if (!users.length) {
-      return res.status(404).json({ message: 'No users yet in database.' });
-    }
+    if (!users.length) return res.status(404).json({ message: 'No users yet in database.' });
 
     return res.status(200).json(users);
   } catch (error) {
@@ -42,21 +46,20 @@ export const getAll = async (_req: Request, res: Response) => {
 };
 
 export const updateUser = async (req: Request, res: Response) => {
+  const { userId } = req.params;
   const { email } = req.body;
 
-  const filter = { _id: req.params.userId };
+  if (!userId || !email) return res.status(400).json({ message: 'You need to provide a userId and email.' });
+
+  const filter = { _id: userId };
   const update = { email };
 
   try {
-    const userToUpdate = await User.findOne(filter);
+    const user = await User.updateOne(filter, update, { runValidators: true, new: true });
 
-    if (!userToUpdate) {
-      return res.status(404).json({ message: 'No user with that ID' });
-    }
+    if (!user) return res.status(404).json({ message: 'No user with that ID' });
 
-    const updatedUser = await User.updateOne(filter, update);
-
-    return res.status(201).json(updatedUser);
+    return res.status(201).json(user);
   } catch (error) {
     const ERROR = error as Error;
     return res.status(500).json(ERROR.message);
@@ -64,17 +67,18 @@ export const updateUser = async (req: Request, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
-  const filter = { _id: req.params.userId };
+  const { userId } = req.params;
+
+  if (!userId) return res.status(400).json({ message: 'You need to provide a userId.' });
+
+  const filter = { _id: userId };
 
   try {
-    const userToDelete = await User.findOne(filter);
+    const user = await User.deleteOne(filter);
 
-    if (!userToDelete) {
-      return res.status(404).json({ message: 'No user with that ID' });
-    }
+    if (!user) return res.status(404).json({ message: 'No user with that ID' });
 
-    const deletedUser = await User.deleteOne(filter);
-    return res.status(201).json(deletedUser);
+    return res.status(201).json(user);
   } catch (error) {
     const ERROR = error as Error;
     return res.status(500).json(ERROR.message);
@@ -84,23 +88,15 @@ export const deleteUser = async (req: Request, res: Response) => {
 export const addFriend = async (req: Request, res: Response) => {
   const { userId, friendId } = req.params;
 
-  if (userId === friendId) {
-    return res.status(401).json({ message: 'you should not befriend yourself, nice try.' });
-  }
+  if (userId === friendId) return res.status(401).json({ message: 'you should not befriend yourself, nice try.' });
 
   try {
     const filter = { _id: userId };
-    const userToUpdate = await User.findOne(filter);
+    const user = await User.findOneAndUpdate(filter, { $addToSet: { friends: friendId } }, { runValidators: true, new: true });
 
-    if (!userToUpdate) {
-      return res.status(404).json({ message: 'No user with that ID' });
-    }
+    if (!user) return res.status(404).json({ message: 'No user with that ID' });
 
-    // Avoiding duplicate friends
-    const friendArray = Array.from(new Set([...userToUpdate.friends.map((f) => `${f}`), friendId]));
-    const updatedUser = await User.updateOne(filter, { friends: friendArray });
-
-    return res.status(201).json(updatedUser);
+    return res.status(201).json(user);
   } catch (error) {
     const ERROR = error as Error;
     return res.status(500).json(ERROR.message);
@@ -110,22 +106,15 @@ export const addFriend = async (req: Request, res: Response) => {
 export const removeFriend = async (req: Request, res: Response) => {
   const { userId, friendId } = req.params;
 
-  if (userId === friendId) {
-    return res.status(401).json({ message: 'you should not remove yourself as friend, nice try.' });
-  }
+  if (userId === friendId) return res.status(401).json({ message: 'you should not remove yourself as friend, nice try.' });
 
   try {
     const filter = { _id: userId };
-    const userToUpdate = await User.findOne(filter);
+    const user = await User.findOneAndUpdate(filter, { $pull: { friends: friendId } }, { runValidators: true, new: true });
 
-    if (!userToUpdate) {
-      return res.status(404).json({ message: 'No user with that ID' });
-    }
+    if (!user) return res.status(404).json({ message: 'No user with that ID' });
 
-    const friendArray = Array.from(new Set([...userToUpdate.friends.map((f) => `${f}`).filter((filter) => filter !== friendId)]));
-    const updatedUser = await User.updateOne(filter, { friends: friendArray });
-
-    return res.status(201).json(updatedUser);
+    return res.status(201).json(user);
   } catch (error) {
     const ERROR = error as Error;
     return res.status(500).json(ERROR.message);
