@@ -1,12 +1,11 @@
 import { Document, model, Schema } from 'mongoose';
-
-import Reactions from './Reactions.js';
+import Reaction from './Reactions.js';
 
 interface IThought extends Document {
   thoughtText: string;
   createdAt: Date;
   username: string;
-  reactions: typeof Reactions[];
+  reactions: typeof Reaction[]
 }
 
 const thoughtsSchema = new Schema<IThought>(
@@ -25,7 +24,7 @@ const thoughtsSchema = new Schema<IThought>(
       type: Schema.Types.String,
       required: true,
     },
-    reactions: [Reactions],
+    reactions: [Reaction],
   },
   {
     toJSON: { virtuals: true },
@@ -40,7 +39,6 @@ thoughtsSchema.virtual('getCreatedAt').get(function () {
 thoughtsSchema.virtual('reactionCount').get(function () {
   return this.reactions.length;
 });
-
 
 const Thought = model('Thought', thoughtsSchema);
 

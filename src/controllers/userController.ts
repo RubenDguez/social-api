@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import User from '../models/User.js';
+import { User } from '../models/index.js';
 
 export const addUser = async (req: Request, res: Response) => {
   try {
@@ -122,7 +122,6 @@ export const removeFriend = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'No user with that ID' });
     }
 
-    // Avoiding duplicate friends
     const friendArray = Array.from(new Set([...userToUpdate.friends.map((f) => `${f}`).filter((filter) => filter !== friendId)]));
     const updatedUser = await User.updateOne(filter, { friends: friendArray });
 

@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import Thought from '../models/Thoughts.js';
-import User from '../models/User.js';
+import { Thought, User } from '../models/index.js';
 
 export const addThought = async (req: Request, res: Response) => {
   const { thoughtText, username } = req.body;
@@ -75,9 +74,9 @@ export const deleteThought = async (req: Request, res: Response) => {
     }
 
     const deletedThought = await Thought.deleteOne({ _id: thoughtId });
-    const thoughtArray = user.thoughts.filter((th) => (`${th}` !== thoughtId ));
+    const thoughtArray = user.thoughts.filter((th) => `${th}` !== thoughtId);
 
-    await User.updateOne({ username }, { thoughts: thoughtArray })
+    await User.updateOne({ username }, { thoughts: thoughtArray });
 
     return res.status(201).json(deletedThought);
   } catch (error) {

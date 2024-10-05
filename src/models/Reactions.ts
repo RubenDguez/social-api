@@ -1,4 +1,4 @@
-import { Document, ObjectId, Schema } from 'mongoose';
+import { Document, ObjectId, Schema, Types } from 'mongoose';
 
 interface IReaction extends Document {
   reactionId: ObjectId;
@@ -7,24 +7,33 @@ interface IReaction extends Document {
   createdAt: Date;
 }
 
-const reactionSchema = new Schema<IReaction>({
-  reactionId: {
-    type: Schema.Types.ObjectId,
+const reactionSchema = new Schema<IReaction>(
+  {
+    reactionId: {
+      type: Schema.Types.ObjectId,
+      default: () => new Types.ObjectId(),
+    },
+    reactionBody: {
+      type: String,
+      required: true,
+      maxlength: 280,
+    },
+    username: {
+      type: String,
+      required: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  reactionBody: {
-    type: Schema.Types.String,
-    required: true,
-    maxlength: 280,
+  {
+    toJSON: {
+      getters: true,
+    },
+    id: false,
   },
-  username: {
-    type: Schema.Types.String,
-    required: true,
-  },
-  createdAt: {
-    type: Schema.Types.Date,
-    default: Date.now,
-  },
-});
+);
 
 reactionSchema.virtual('getCreatedAt').get(function () {
   `${this.createdAt.toLocaleDateString()} at ${this.createdAt.toLocaleTimeString()}`;
