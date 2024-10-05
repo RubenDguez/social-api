@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
 import Thought from '../models/Thoughts.js';
 
-export const addUser = async (req: Request, res: Response) => {
-    try {
-      const newThoughtData = await Thought.create(req.body);
-      return res.status(201).json(newThoughtData);
-    } catch (error) {
-      const ERROR = error as Error;
-      return res.status(500).json(ERROR.message);
-    }
-  };
+export const addThought = async (req: Request, res: Response) => {
+  try {
+    const newThoughtData = await Thought.create(req.body);
+    return res.status(201).json(newThoughtData);
+  } catch (error) {
+    const ERROR = error as Error;
+    return res.status(500).json(ERROR.message);
+  }
+};
 
 export const getOne = async (req: Request, res: Response) => {
   try {
