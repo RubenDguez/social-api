@@ -3,7 +3,7 @@ import { addThought, getAll, getOne } from '../../controllers/thoughtController.
 const router = Router();
 
 router.post('/', addThought);
-router.get('/', getAll);
 router.get('/:thoughtId', getOne);
+router.get('/', getAll);
 
 export default router;
